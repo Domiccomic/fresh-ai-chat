@@ -1,9 +1,14 @@
 'use client';
+
 import { useChat } from '@ai-sdk/react';
+
 export default function ChatPage() {
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-    api: '/api/chat', // Routes directly to our Gemini route
+    api: '/api/chat',
   });
+
+  // Safe checks to ensure input isn't undefined or completely blank spaces
+  const isInputEmpty = !input || input.trim() === '';
 
   return (
     <main className="flex flex-col items-center justify-between min-h-screen bg-slate-900 text-slate-100 font-sans p-4">
@@ -14,7 +19,7 @@ export default function ChatPage() {
       </header>
 
       {/* Chat Messages Space */}
-      <section className="flex-1 w-full max-w-2xl overflow-y-auto my-4 space-y-4 p-2 custom-scrollbar">
+      <section className="flex-1 w-full max-w-2xl overflow-y-auto my-4 space-y-4 p-2">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-slate-500 pt-20">
             <div className="text-4xl mb-2">🤖</div>
@@ -61,7 +66,7 @@ export default function ChatPage() {
           />
           <button
             type="submit"
-            disabled={isLoading || !(input || '').trim()}
+            disabled={isLoading || isInputEmpty}
             className="bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 disabled:text-slate-600 text-slate-950 font-semibold text-sm px-5 rounded-xl transition-colors cursor-pointer disabled:cursor-not-allowed"
           >
             Send
@@ -71,3 +76,4 @@ export default function ChatPage() {
     </main>
   );
 }
+
