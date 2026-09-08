@@ -1,26 +1,12 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useState } from 'react';
 
 export default function ChatPage() {
-  const [textInput, setTextInput] = useState('');
-  
-  // Clean initialization of useChat using default v5 parameters
-  const { messages, sendMessage, status } = useChat({
+  // Back to standard v4 tracking parameters - simple and stable
+  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
     api: '/api/chat',
   });
-
-  const isThinking = status === 'submitted' || status === 'streaming';
-
-  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!textInput.trim() || isThinking) return;
-
-    // Push the text to the backend handler safely
-    sendMessage({ text: textInput });
-    setTextInput('');
-  };
 
   return (
     <main className="flex flex-col items-center justify-between min-h-screen bg-slate-900 text-slate-100 font-sans p-4">
@@ -38,35 +24,29 @@ export default function ChatPage() {
             <p className="text-sm">Say hello to get your conversation started!</p>
           </div>
         ) : (
-          messages.map((m) => {
-            // Find the text value inside the data piece safely
-            const messageText = m.parts?.find(p => p.type === 'text')?.text || m.content || '';
-            if (!messageText) return null;
-
-            return (
+          messages.map((m) => (
+            <div
+              key={m.id}
+              className={`flex flex-col ${
+                m.role === 'user' ? 'items-end' : 'items-start'
+              }`}
+            >
+              <span className="text-[10px] text-slate-500 mb-1 px-1 capitalize">
+                {m.role}
+              </span>
               <div
-                key={m.id}
-                className={`flex flex-col ${
-                  m.role === 'user' ? 'items-end' : 'items-start'
+                className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm shadow-md whitespace-pre-wrap ${
+                  m.role === 'user'
+                    ? 'bg-teal-600 text-white rounded-tr-none'
+                    : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-tl-none'
                 }`}
               >
-                <span className="text-[10px] text-slate-500 mb-1 px-1 capitalize">
-                  {m.role}
-                </span>
-                <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm shadow-md whitespace-pre-wrap ${
-                    m.role === 'user'
-                      ? 'bg-teal-600 text-white rounded-tr-none'
-                      : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-tl-none'
-                  }`}
-                >
-                  {messageText}
-                </div>
+                {m.content}
               </div>
-            );
-          })
+            </div>
+          ))
         )}
-        {isThinking && (
+        {isLoading && (
           <div className="text-xs text-teal-400 animate-pulse px-1">
             Gemini is thinking...
           </div>
@@ -75,16 +55,16 @@ export default function ChatPage() {
 
       {/* Input Message Form */}
       <footer className="w-full max-w-2xl pb-4">
-        <form onSubmit={handleFormSubmit} className="flex gap-2 w-full">
+        <form onSubmit={handleSubmit} className="flex gap-2 w-full">
           <input
             className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
-            value={textInput}
+            value={input || ''}
             placeholder="Type a message..."
-            onChange={(e) => setTextInput(e.target.value)}
+            onChange={handleInputChange}
           />
           <button
             type="submit"
-            disabled={isThinking || !textInput.trim()}
+            disabled={isLoading || !(input || '').trim()}
             className="bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 disabled:text-slate-600 text-slate-950 font-semibold text-sm px-5 rounded-xl transition-colors cursor-pointer disabled:cursor-not-allowed"
           >
             Send
@@ -94,3 +74,4 @@ export default function ChatPage() {
     </main>
   );
 }
+
