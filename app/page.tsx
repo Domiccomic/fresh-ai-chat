@@ -1,14 +1,31 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
+import { useState } from 'react';
 
 export default function ChatPage() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+  // Manually handle the text box state for AI SDK 5
+  const [customInput, setCustomInput] = useState('');
+  
+  const { messages, append, isLoading } = useChat({
     api: '/api/chat',
   });
 
-  // Safe checks to ensure input isn't undefined or completely blank spaces
-  const isInputEmpty = !input || input.trim() === '';
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!customInput.trim()) return;
+
+    // Send the user message to the backend Gemini api
+    append({
+      role: 'user',
+      content: customInput,
+    });
+
+    // Clear the text input box
+    setCustomInput('');
+  };
+
+  const isButtonDisabled = isLoading || !customInput.trim();
 
   return (
     <main className="flex flex-col items-center justify-between min-h-screen bg-slate-900 text-slate-100 font-sans p-4">
@@ -57,16 +74,16 @@ export default function ChatPage() {
 
       {/* Input Message Form */}
       <footer className="w-full max-w-2xl pb-4">
-        <form onSubmit={handleSubmit} className="flex gap-2 w-full">
+        <form onSubmit={handleFormSubmit} className="flex gap-2 w-full">
           <input
             className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
-            value={input}
+            value={customInput}
             placeholder="Type a message..."
-            onChange={handleInputChange}
+            onChange={(e) => setCustomInput(e.target.value)}
           />
           <button
             type="submit"
-            disabled={isLoading || isInputEmpty}
+            disabled={isButtonDisabled}
             className="bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 disabled:text-slate-600 text-slate-950 font-semibold text-sm px-5 rounded-xl transition-colors cursor-pointer disabled:cursor-not-allowed"
           >
             Send
