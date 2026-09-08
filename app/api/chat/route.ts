@@ -4,7 +4,7 @@ import { streamText } from 'ai';
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
-  // Create a standard text data stream response
+  // Call Google Gemini directly and return a clean data stream response
   const result = streamText({
     model: google('gemini-1.5-flash'),
     messages,

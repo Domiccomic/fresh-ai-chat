@@ -3,10 +3,12 @@
 import { useChat } from '@ai-sdk/react';
 
 export default function ChatPage() {
-  // Back to standard v4 tracking parameters - simple and stable
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+  // Use the native, reliable properties provided by the standard SDK hook
+  const { messages, input, handleInputChange, handleSubmit, status } = useChat({
     api: '/api/chat',
   });
+
+  const isThinking = status === 'submitted' || status === 'streaming';
 
   return (
     <main className="flex flex-col items-center justify-between min-h-screen bg-slate-900 text-slate-100 font-sans p-4">
@@ -46,7 +48,7 @@ export default function ChatPage() {
             </div>
           ))
         )}
-        {isLoading && (
+        {isThinking && (
           <div className="text-xs text-teal-400 animate-pulse px-1">
             Gemini is thinking...
           </div>
@@ -58,13 +60,13 @@ export default function ChatPage() {
         <form onSubmit={handleSubmit} className="flex gap-2 w-full">
           <input
             className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
-            value={input || ''}
+            value={input}
             placeholder="Type a message..."
             onChange={handleInputChange}
           />
           <button
             type="submit"
-            disabled={isLoading || !(input || '').trim()}
+            disabled={isThinking || !input.trim()}
             className="bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 disabled:text-slate-600 text-slate-950 font-semibold text-sm px-5 rounded-xl transition-colors cursor-pointer disabled:cursor-not-allowed"
           >
             Send
@@ -74,4 +76,3 @@ export default function ChatPage() {
     </main>
   );
 }
-
