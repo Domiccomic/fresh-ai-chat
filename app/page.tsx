@@ -1,18 +1,14 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
 import { useState } from 'react';
 
 export default function ChatPage() {
-  // Explicitly handle local text box state for AI SDK 5
   const [textInput, setTextInput] = useState('');
   
-  // Inject the required DefaultChatTransport layer for your API pathway
+  // Clean initialization of useChat using default v5 parameters
   const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({
-      api: '/api/chat',
-    }),
+    api: '/api/chat',
   });
 
   const isThinking = status === 'submitted' || status === 'streaming';
@@ -21,14 +17,10 @@ export default function ChatPage() {
     e.preventDefault();
     if (!textInput.trim() || isThinking) return;
 
-    // Dispatch message via Vercel AI SDK 5 signature format
+    // Push the text to the backend handler safely
     sendMessage({ text: textInput });
-    
-    // Wipe field clear instantly
     setTextInput('');
   };
-
-  const isButtonDisabled = isThinking || !textInput.trim();
 
   return (
     <main className="flex flex-col items-center justify-between min-h-screen bg-slate-900 text-slate-100 font-sans p-4">
@@ -46,28 +38,33 @@ export default function ChatPage() {
             <p className="text-sm">Say hello to get your conversation started!</p>
           </div>
         ) : (
-          messages.map((m) => (
-            <div
-              key={m.id}
-              className={`flex flex-col ${
-                m.role === 'user' ? 'items-end' : 'items-start'
-              }`}
-            >
-              <span className="text-[10px] text-slate-500 mb-1 px-1 capitalize">
-                {m.role}
-              </span>
+          messages.map((m) => {
+            // Find the text value inside the data piece safely
+            const messageText = m.parts?.find(p => p.type === 'text')?.text || m.content || '';
+            if (!messageText) return null;
+
+            return (
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm shadow-md whitespace-pre-wrap ${
-                  m.role === 'user'
-                    ? 'bg-teal-600 text-white rounded-tr-none'
-                    : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-tl-none'
+                key={m.id}
+                className={`flex flex-col ${
+                  m.role === 'user' ? 'items-end' : 'items-start'
                 }`}
               >
-                {/* AI SDK 5 streams text into a direct string or content layout mapping */}
-                {typeof m.content === 'string' ? m.content : JSON.stringify(m.content)}
+                <span className="text-[10px] text-slate-500 mb-1 px-1 capitalize">
+                  {m.role}
+                </span>
+                <div
+                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm shadow-md whitespace-pre-wrap ${
+                    m.role === 'user'
+                      ? 'bg-teal-600 text-white rounded-tr-none'
+                      : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-tl-none'
+                  }`}
+                >
+                  {messageText}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
         {isThinking && (
           <div className="text-xs text-teal-400 animate-pulse px-1">
@@ -87,7 +84,7 @@ export default function ChatPage() {
           />
           <button
             type="submit"
-            disabled={isButtonDisabled}
+            disabled={isThinking || !textInput.trim()}
             className="bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 disabled:text-slate-600 text-slate-950 font-semibold text-sm px-5 rounded-xl transition-colors cursor-pointer disabled:cursor-not-allowed"
           >
             Send
