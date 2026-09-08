@@ -1,28 +1,30 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import { useState } from 'react';
 
 export default function ChatPage() {
-  // Track the text box state using standard local React state
+  // Explicitly handle local text box state for AI SDK 5
   const [textInput, setTextInput] = useState('');
   
-  // Destructure the correct modern properties from AI SDK 5
+  // Inject the required DefaultChatTransport layer for your API pathway
   const { messages, sendMessage, status } = useChat({
-    api: '/api/chat',
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+    }),
   });
 
-  // Check if the AI model is currently streaming an active response
   const isThinking = status === 'submitted' || status === 'streaming';
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!textInput.trim() || isThinking) return;
 
-    // Use the correct AI SDK 5 method to dispatch your message
+    // Dispatch message via Vercel AI SDK 5 signature format
     sendMessage({ text: textInput });
-
-    // Instantly wipe the text input box clean
+    
+    // Wipe field clear instantly
     setTextInput('');
   };
 
@@ -61,7 +63,8 @@ export default function ChatPage() {
                     : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-tl-none'
                 }`}
               >
-                {m.content}
+                {/* AI SDK 5 streams text into a direct string or content layout mapping */}
+                {typeof m.content === 'string' ? m.content : JSON.stringify(m.content)}
               </div>
             </div>
           ))
