@@ -4,28 +4,29 @@ import { useChat } from '@ai-sdk/react';
 import { useState } from 'react';
 
 export default function ChatPage() {
-  // Manually handle the text box state for AI SDK 5
-  const [customInput, setCustomInput] = useState('');
+  // Track the text box state using standard local React state
+  const [textInput, setTextInput] = useState('');
   
-  const { messages, append, isLoading } = useChat({
+  // Destructure the correct modern properties from AI SDK 5
+  const { messages, sendMessage, status } = useChat({
     api: '/api/chat',
   });
 
+  // Check if the AI model is currently streaming an active response
+  const isThinking = status === 'submitted' || status === 'streaming';
+
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!customInput.trim()) return;
+    if (!textInput.trim() || isThinking) return;
 
-    // Send the user message to the backend Gemini api
-    append({
-      role: 'user',
-      content: customInput,
-    });
+    // Use the correct AI SDK 5 method to dispatch your message
+    sendMessage({ text: textInput });
 
-    // Clear the text input box
-    setCustomInput('');
+    // Instantly wipe the text input box clean
+    setTextInput('');
   };
 
-  const isButtonDisabled = isLoading || !customInput.trim();
+  const isButtonDisabled = isThinking || !textInput.trim();
 
   return (
     <main className="flex flex-col items-center justify-between min-h-screen bg-slate-900 text-slate-100 font-sans p-4">
@@ -65,7 +66,7 @@ export default function ChatPage() {
             </div>
           ))
         )}
-        {isLoading && (
+        {isThinking && (
           <div className="text-xs text-teal-400 animate-pulse px-1">
             Gemini is thinking...
           </div>
@@ -77,9 +78,9 @@ export default function ChatPage() {
         <form onSubmit={handleFormSubmit} className="flex gap-2 w-full">
           <input
             className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
-            value={customInput}
+            value={textInput}
             placeholder="Type a message..."
-            onChange={(e) => setCustomInput(e.target.value)}
+            onChange={(e) => setTextInput(e.target.value)}
           />
           <button
             type="submit"
@@ -93,4 +94,3 @@ export default function ChatPage() {
     </main>
   );
 }
-
